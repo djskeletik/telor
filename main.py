@@ -111,7 +111,7 @@ def display_help():
     table.add_row("more", "увеличить громкость")
     table.add_row("volume <уровень>", "установить уровень громкости (от 0 до 100)")
     table.add_row("change_info <индекс>", "изменить информацию о треке")
-    table.add_row("play <индекс песни>", "воспроизвести трек по индексу")
+    table.add_row("play <индекс песни или имя трека>", "воспроизвести трек по индексу или имени")
     table.add_row("help", "отобразить это меню")
     table.add_row("exit", "выйти из программы")
 
@@ -200,6 +200,7 @@ def main():
                 change_volume(volume)
             except (ValueError, IndexError):
                 print("Неверный формат команды volume. Используйте: volume <уровень>")
+
         elif command.startswith("change_info"):
             try:
                 track_index = int(command.split()[1]) - 1
@@ -210,30 +211,44 @@ def main():
                     print("Неверный индекс трека.")
             except (ValueError, IndexError):
                 print("Неверный формат команды change_info. Используйте: change_info <индекс>")
+
         elif command.startswith("play"):
             try:
-                track_index = int(command.split()[1]) - 1
-                if 0 <= track_index < total_tracks:
+                track_identifier = command.split()[1]
+                if track_identifier.isdigit():
+                    track_index = int(track_identifier) - 1
+                    if 0 <= track_index < total_tracks:
+                        track_path = os.path.join(folder_path, mp3_files[track_index])
+                        play_track(track_path)
+                        current_index = track_index
+                    else:
+                        print("Неверный индекс трека.")
+                else:
+                    track_name = " ".join(command.split()[1:])
+                    try:
+                        # Check if the track name exists with ".mp3" extension
+                        track_index = mp3_files.index(track_name)
+                    except ValueError:
+                        # Check if the track name exists without ".mp3" extension
+                        track_name_with_extension = track_name + ".mp3"
+                        try:
+                            track_index = mp3_files.index(track_name_with_extension)
+                        except ValueError:
+                            print("Трек не найден.")
+                            continue
+
                     track_path = os.path.join(folder_path, mp3_files[track_index])
                     play_track(track_path)
                     current_index = track_index
-                else:
-                    print("Неверный индекс трека.")
-            except (ValueError, IndexError):
-                print("Неверный формат команды play. Используйте: play <индекс песни>")
+            except IndexError:
+                print("Неверный формат команды play. Используйте: play <индекс песни или имя трека>")
+
+
         elif command == "help":
             display_help()
-            input("Нажмите Enter, чтобы продолжить...")
+            input("Нажмите Enter для продолжения...")
         else:
-            continue
-
-        track_path = os.path.join(folder_path, mp3_files[current_index])
-        console.clear()
-        console.print(table)
-        console.print(f"\nСейчас играет: [bold cyan]{mp3_files[current_index]}[/bold cyan]\n")
-
-        play_track(track_path)
-
+            print("Неизвестная команда. Введите 'help' для отображения списка команд.")
 
 if __name__ == "__main__":
     main()
